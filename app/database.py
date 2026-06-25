@@ -5,11 +5,19 @@ SECURITY BEST PRACTICE: Always use parameterized queries. Never concatenate
 user input into SQL strings.
 """
 
+import os
 import sqlite3
 from contextlib import contextmanager
 
 
-DATABASE_PATH = "app.db"
+def _parse_database_path() -> str:
+    url = os.environ.get("DATABASE_URL", "sqlite:///app.db")
+    if url.startswith("sqlite:///"):
+        return url[len("sqlite:///"):]
+    return url
+
+
+DATABASE_PATH = _parse_database_path()
 
 
 def init_db():
@@ -61,6 +69,15 @@ def find_user_by_username(username: str) -> dict | None:
     with get_db() as db:
         row = db.execute(
             "SELECT * FROM users WHERE username = ?", (username,)
+        ).fetchone()
+        return dict(row) if row else None
+
+
+def find_user_by_email(email: str) -> dict | None:
+    """Find a user by email using parameterized queries."""
+    with get_db() as db:
+        row = db.execute(
+            "SELECT * FROM users WHERE email = ?", (email,)
         ).fetchone()
         return dict(row) if row else None
 

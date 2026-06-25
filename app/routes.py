@@ -9,6 +9,8 @@ SECURITY BEST PRACTICES demonstrated:
 - No debug endpoints in production
 """
 
+import sqlite3
+
 from flask import Blueprint, request
 
 from app.auth import (
@@ -21,6 +23,7 @@ from app.auth import (
 from app.database import (
     create_post,
     create_user,
+    find_user_by_email,
     find_user_by_username,
     get_posts_for_user,
 )
@@ -74,9 +77,15 @@ def register():
     if find_user_by_username(username):
         return {"error": "Username already taken"}, 409
 
+    if find_user_by_email(email):
+        return {"error": "Email already taken"}, 409
+
     # Hash password and create user
     password_hash = hash_password(password)
-    user_id = create_user(username, password_hash, email)
+    try:
+        user_id = create_user(username, password_hash, email)
+    except sqlite3.IntegrityError:
+        return {"error": "Username or email already taken"}, 409
 
     token = create_token(user_id)
     return {"token": token, "user_id": user_id}, 201
@@ -142,7 +151,9 @@ def create_new_post():
     # Sanitize HTML to prevent stored XSS
     safe_content = sanitize_html(content)
 
-    post_id = create_post(request.current_user["id"], title, safe_content)
+    safe_title = sanitize_html(title)
+
+    post_id = create_post(request.current_user["id"], safe_title, safe_content)
     return {"post_id": post_id}, 201
 
 
