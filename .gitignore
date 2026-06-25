@@ -1,8 +1,33 @@
+# Environment and secrets — NEVER commit these
+.env
+*.db
+
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
+*$py.class
 *.egg-info/
 dist/
 build/
-.coverage
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test/coverage
 .pytest_cache/
+.coverage
+htmlcov/
