@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "octo-compute"
+version = "0.1.0"
+description = "Utility library for the ubiquitous-octo-computing-machine"
+requires-python = ">=3.9"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
+
+[tool.coverage.run]
+source = ["src/octo_compute"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 0
