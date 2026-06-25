@@ -53,9 +53,12 @@ def create_app(config_class=None) -> Flask:
     app.register_blueprint(api)
 
     # Apply strict rate limit only to auth endpoints, not the whole blueprint
-    from app.routes import login, register
-    limiter.limit("5 per minute")(login)
-    limiter.limit("5 per minute")(register)
+    app.view_functions["api.login"] = limiter.limit("5 per minute")(
+        app.view_functions["api.login"]
+    )
+    app.view_functions["api.register"] = limiter.limit("5 per minute")(
+        app.view_functions["api.register"]
+    )
 
     # Security headers
     @app.after_request
