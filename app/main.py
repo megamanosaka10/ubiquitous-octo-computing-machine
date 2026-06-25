@@ -48,10 +48,17 @@ def create_app(config_class=None) -> Flask:
         default_limits=["100 per minute"],
         storage_uri="memory://",
     )
-    limiter.limit("5 per minute")(api)
 
     # Register routes
     app.register_blueprint(api)
+
+    # Apply strict rate limit only to auth endpoints, not the whole blueprint
+    app.view_functions["api.login"] = limiter.limit("5 per minute")(
+        app.view_functions["api.login"]
+    )
+    app.view_functions["api.register"] = limiter.limit("5 per minute")(
+        app.view_functions["api.register"]
+    )
 
     # Security headers
     @app.after_request

@@ -8,7 +8,7 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key-not-for-production")
 
 import pytest
 
-from app.database import DATABASE_PATH, find_user_by_username, init_db
+from app.database import DATABASE_PATH, find_user_by_email, find_user_by_username, init_db
 from app.main import create_app
 from app.validation import (
     sanitize_html,
@@ -115,6 +115,57 @@ class TestXSSPrevention:
         result = sanitize_html("<b>Bold</b> and <em>italic</em>")
         assert "<b>Bold</b>" in result
         assert "<em>italic</em>" in result
+
+    def test_post_title_sanitized(self, client):
+        """Post titles should have HTML sanitized just like content."""
+        reg = client.post(
+            "/api/register",
+            json={
+                "username": "titletest",
+                "email": "title@example.com",
+                "password": "SecurePass1",
+            },
+        )
+        token = reg.get_json()["token"]
+        response = client.post(
+            "/api/posts",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "title": "<script>alert(1)</script>Safe Title",
+                "content": "Normal content",
+            },
+        )
+        assert response.status_code == 201
+        posts = client.get(
+            "/api/posts",
+            headers={"Authorization": f"Bearer {token}"},
+        ).get_json()["posts"]
+        assert "<script>" not in posts[0]["title"]
+
+
+class TestDuplicateEmailCheck:
+    """Verify duplicate email registration is rejected."""
+
+    def test_duplicate_email_rejected(self, client):
+        """Registering with an already-taken email returns 409."""
+        client.post(
+            "/api/register",
+            json={
+                "username": "firstuser",
+                "email": "shared@example.com",
+                "password": "SecurePass1",
+            },
+        )
+        response = client.post(
+            "/api/register",
+            json={
+                "username": "seconduser",
+                "email": "shared@example.com",
+                "password": "SecurePass1",
+            },
+        )
+        assert response.status_code == 409
+        assert "email" in response.get_json()["error"].lower()
 
 
 class TestAuthentication:
