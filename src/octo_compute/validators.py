@@ -13,7 +13,7 @@ def is_valid_email(email: str) -> bool:
 
 def is_valid_url(url: str) -> bool:
     """Return True if *url* looks like a valid HTTP(S) URL."""
-    pattern = r"^https?://[^\s/$.?#].[^\s]*$"
+    pattern = r"^https?://[^\s/$.?#]+\.[^\s]*$"
     return bool(re.match(pattern, url))
 
 
